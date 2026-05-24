@@ -91,7 +91,8 @@ CREATE TABLE IF NOT EXISTS blood_requests (
   admin_id       UUID REFERENCES admin_users(id),
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   fulfilled_at   TIMESTAMPTZ
-);-- Donation History
+);
+-- Donation History
 CREATE TABLE IF NOT EXISTS donation_history (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   donor_id          UUID REFERENCES users(id) NOT NULL,
@@ -108,7 +109,35 @@ status
 VARCHAR(15) DEFAULT 'CHECKED_IN',
 admin_id          UUID REFERENCES admin_users(id),
 created_at        TIMESTAMPTZ DEFAULT NOW()
-);-- Seed initial blood stock
+);
+-- Stock Transactions (Audit Log) — FR-A08
+CREATE TABLE IF NOT EXISTS stock_transactions (
+id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+blood_type           
+VARCHAR(3) NOT NULL,
+product_type         
+quantity_change      
+quantity_before      
+quantity_after       
+action_type          
+VARCHAR(15) NOT NULL,
+INT NOT NULL,        
+INT NOT NULL,
+INT NOT NULL,-- positif = tambah, negatif = kurangi
+VARCHAR(20) NOT NULL, -- DONATION_IN | DISTRIBUTION_OUT | ADJUSTMENT
+reference_request_id UUID REFERENCES blood_requests(id),
+admin_id             UUID REFERENCES admin_users(id) NOT NULL,
+notes                TEXT,
+created_at           TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_stock_tx_blood   
+product_type);
+CREATE INDEX IF NOT EXISTS idx_stock_tx_admin   
+ON stock_transactions(blood_type, 
+ON stock_transactions(admin_id);
+CREATE INDEX IF NOT EXISTS idx_stock_tx_created ON stock_transactions(created_at 
+DESC);
+-- Seed initial blood stock
 INSERT INTO blood_stock (blood_type, product_type, quantity) VALUES
 ('A+','WB',0),('A+','PRC',0),('A+','FFP',0),('A+','THROMBOCYTE',0),
 ('A-','WB',0),('A-','PRC',0),('A-','FFP',0),('A-','THROMBOCYTE',0),
